@@ -18,14 +18,15 @@
       </span>
     </div>
 
+<!--    <slot name="input"></slot>-->
     <input type="text"
-           class="input__value-field"
-           :id="id"
-           :placeholder="placeholder"
-           v-model="value"
-           @input="inputHandler"
-           @change="changeHandler"
-           @blur="blurHandler">
+       class="input__value-field"
+       :id="id"
+       :placeholder="placeholder"
+       v-model="value"
+       @input="inputHandler"
+       @change="changeHandler"
+       @blur="blurHandler">
 
   </label>
 </template>
@@ -54,11 +55,6 @@ export default {
         message: '',
         isVisible: false
       }
-    }
-  },
-  watch: {
-    errorList: function () {
-
     }
   },
   methods: {

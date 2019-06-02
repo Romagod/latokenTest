@@ -75,7 +75,12 @@
       </template>
     </InputText>
 
-    <Dropdown/>
+    <Dropdown
+      :options="{
+        'placeholder': 'Choose up to 3 industries that describes your project the best',
+        'maxCount': 3,
+        'maxDisplayItems': 5
+      }"/>
 
     <ImageLoader
       :options="{
@@ -86,20 +91,17 @@
       <span>PNG or JPG, min 800*600, up to 5Mb</span>
     </ImageLoader>
 
-<!--    <Submit @submit="submit"/>-->
-
   </form>
 </template>
 
 <script>
 import InputText from './InputText'
-import Submit from './Submit'
 import Tooltip from './Tooltip'
 import Dropdown from './Dropdown'
 import ImageLoader from './ImageLoader'
 export default {
   name: 'Form',
-  components: {ImageLoader, Dropdown, Tooltip, Submit, InputText},
+  components: {ImageLoader, Dropdown, Tooltip, InputText},
   props: [
     'action',
     'id'
@@ -125,7 +127,7 @@ export default {
     },
     validatorSiteURL: function (value, data) {
       return {
-        result: /^(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w.-]+)+[\w\-._~:/?#[\]@!$&'()*+,;=.]+$/.test(value),
+        result: /^(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w.-]+)+[\w\-._~:/?#[\]@!$&'()*+,;=.]+$/.test(value) || value === '',
         errorMessage: data.errorMessage
       }
     },

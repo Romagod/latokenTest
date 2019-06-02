@@ -1,6 +1,7 @@
 <template>
   <label class="image-loader"
     :options="options.validTypes ? options.validTypes : ['image/png', 'image/jpeg']">
+    <input type="hidden" name="image-loader"> <!-- todo -->
 
     <div class="image-loader__drag-area"
       v-if="!isFull"
@@ -79,10 +80,10 @@ export default {
           this.options.maxSize >= image.size
         ) {
           image.id = Math.random().toString(16).slice(2)
+          this.$set(this.value, image.id, image)
 
           this.readImage(image).then((result) => {
             this.$set(this.images, image.id, result)
-            this.$set(this.value, image.id, image)
           })
         } else {
           console.log('error') // todo
@@ -107,6 +108,10 @@ export default {
 </script>
 
 <style scoped>
+.image-loader {
+  display: block;
+}
+
 .image-loader__drag-area {
   box-sizing: border-box;
 

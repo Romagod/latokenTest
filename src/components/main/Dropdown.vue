@@ -1,10 +1,19 @@
 <template>
   <div class="dropdown">
 
-    <input class="dropdown__value-field" type="text" name="asd"
-      v-model="inputValue"
-      @click="dropdownClickHandler"
-      @input="filter">
+    <div class="dropdown__input-wrapper">
+      <div class="dropdown__clear"
+        v-if="inputValue.length"
+        @click="clearInput">
+        Banking
+      </div>
+
+      <input class="dropdown__value-field" type="text" name="dropdown"
+         v-model="inputValue"
+         @click="dropdownClickHandler"
+         @input="filter"
+         :placeholder="viewSelectedData()">
+    </div>
 
     <div class="dropdown__drop-list-wrapper"
          v-if="dropdownIsVisible">
@@ -14,9 +23,11 @@
       </div>
 
       <ul class="dropdown__drop-list"
-          @scroll="dropdownScrollHandler">
+          @scroll="dropdownScrollHandler"
+          :style="dropListHeight">
 
         <li class="dropdown__item"
+            ref="item"
             v-for="(item) in dataList"
             v-if="item.visible"
             :key="item.id"
@@ -36,13 +47,25 @@
 <script>
 export default {
   name: 'Dropdown',
+  props: [
+    'options'
+  ],
   data () {
     return {
       'dataList': [],
       'value': [],
       'inputValue': '',
-      'dropdownIsVisible': false,
-      'listLength': 5
+      'dropdownIsVisible': false
+    }
+  },
+  computed: {
+    dropListHeight: function () {
+      const itemHeight = 45
+
+      let countVisibleItems = this.options.maxDisplayItems < this.dataList.length
+        ? this.options.maxDisplayItems : this.dataList.length
+
+      return {'max-height': itemHeight * countVisibleItems + 'px'}
     }
   },
   methods: {
@@ -58,20 +81,25 @@ export default {
         {value: 'item-8', id: '8'}
       ]
     },
-    select: function (target) {
-      target.selected = !target.selected
 
-      if (target.selected === true) {
+    select: function (target) {
+      console.log(this.value.length)
+
+      target.selected = this.options.maxCount > this.value.length || target.selected ? !target.selected : target.selected
+
+      if (target.selected === true && this.options.maxCount > this.value.length) {
         this.value.push(target)
       } else {
         this.value = this.value.filter(item => item !== target)
       }
     },
+
     filter: function () {
       this.dataList.forEach(item => {
         item.visible = item.value.startsWith(this.inputValue)
       })
     },
+
     dropdownClickHandler: function () {
       this.dropdownIsVisible = true
 
@@ -82,13 +110,14 @@ export default {
         }
       }
 
-      setTimeout(() => {
+      new Promise(resolve => resolve()).then(() => {
         if (document.click !== dropDownCloseHandler) {
           document.addEventListener('click', dropDownCloseHandler)
         }
-      }, 0)
+      })
     },
-    dropdownScrollHandler: function (event) {
+
+    dropdownScrollHandler: function (event) { // todo
       let clientHeight = event.target.clientHeight
       let scrollTop = event.target.scrollTop
       let scrollHeight = event.target.scrollHeight
@@ -100,8 +129,24 @@ export default {
         (clientHeight - scroll.clientHeight - scrollMargin * 2) * scrollDelta
       )
     },
+
     setScrollPosition: function (y) {
       this.$refs.dropdownScroll.style.top = y + 'px'
+    },
+
+    viewSelectedData: function () {
+      let result = ''
+      this.value.forEach(item => {
+        console.log(item)
+        result += item.value + ', '
+      })
+
+      return result.slice(0, -2) || this.options.placeholder
+    },
+
+    clearInput: function () {
+      this.inputValue = ''
+      this.filter()
     }
   },
   created () {
@@ -111,6 +156,9 @@ export default {
       this.$set(item, 'selected', false)
       this.$set(item, 'visible', true)
     })
+  },
+  mounted () {
+
   }
 }
 </script>
@@ -137,6 +185,59 @@ input { /* todo */
 
 .dropdown__value-field {
 
+}
+
+.dropdown__input-wrapper {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+}
+
+.dropdown__clear {
+  box-sizing: border-box;
+
+  position: absolute;
+  left: 8px;
+
+  display: flex;
+  align-items: center;
+
+  width: 100px;
+  height: 32px;
+
+  padding: 0 0.4em;
+
+  cursor: pointer;
+  user-select: none;
+
+  background: var(--light-color);
+
+  border: 1px solid var(--inactive-color-04);
+  border-radius: 2px;
+}
+
+.dropdown__clear:hover {
+  background-color: var(--inactive-color-01);
+}
+
+.dropdown__clear:active {
+  box-shadow: inset 0 0 5px 0 rgba(0,0,0,0.1);
+}
+
+.dropdown__clear::after {
+  content: '';
+  position: absolute;
+  right: 4px;
+
+  width: 11px;
+  height: 13px;
+
+  background: url("../../assets/basket.svg") 50% 50% no-repeat;
+}
+
+.dropdown__clear + .dropdown__value-field {
+  padding-left: 120px;
 }
 
 .dropdown__drop-list-wrapper {
