@@ -1,5 +1,6 @@
 <template>
   <li class="nav-item"
+       v-if="isVisible"
        :class="{
         'nav-item--primary': isPrimary,
        }">
@@ -7,13 +8,19 @@
     <a class="nav-item__link"
        :class="{'nav-item--active': isActive}"
        :href="href ? href : '#'"
-       @click.prevent="toggle">
-      {{ caption }}
+       @click.prevent="setActiveTab">
+      {{ options.title }}
     </a>
 
     <ul class="nav-item__list"
-      v-if="isActive && hasChildren">
-      <slot></slot>
+      v-if="isActive && options.children">
+      <NavItem
+        v-for="(item, index) in options.children"
+        :key="index"
+        :id="index"
+        :options="item"
+        @active="activeHandler">
+      </NavItem>
     </ul>
 
   </li>
@@ -24,30 +31,47 @@
 export default {
   name: 'NavItem',
   props: [
-    'caption',
-    'href'
+    'options',
+    'href',
+    'id'
   ],
   data () {
     return {
-      isActive: false
-    }
-  },
-  computed: {
-    isPrimary: function () {
-      return this.$parent.$options.name !== this.$options.name // !!!check name
-    },
-    hasChildren: function () {
-      return !!this.$slots.default
+      isPrimary: false,
+      isActive: false,
+      isEndPoint: false
     }
   },
   methods: {
-    toggle: function () {
-      this.$parent.$children.forEach(item => {
-        item.isActive = false
-      })
-
+    // toggle neighbour active property
+    setActiveTab: function () {
       this.isActive = true
+      this.$parent.$emit('active', this.id)
+
+      if (this.isEndPoint) {
+        // do redirect
+      }
+    },
+
+    activeHandler: function () {
+      this.isVisible = true
+    },
+    isVisible: function () {
+      return this.$parent.isActive || this.isPrimary
     }
+  },
+  created () {
+    this.isPrimary = this.$parent.$options._componentTag === 'Nav'
+
+    this.isEndPoint = !!this.options.children
+
+    this.isActive = this.options.isActive
+
+    this.$parent.$on('active', (id) => {
+      if (this.id !== id) {
+        this.isActive = false
+      }
+    })
   }
 }
 

@@ -4,7 +4,10 @@
 
     <div class="main-header__logo-wrapper">
 
-      <img class="main-header__logo" src="../../assets/logo.svg" alt="logo">
+      <a class="main-header__link" href="/">
+        <img class="main-header__logo" src="../../assets/logo.svg" alt="logo">
+      </a>
+
       <h1 class="main-header__caption">
         {{ options.caption }}
       </h1>
@@ -26,22 +29,25 @@ export default {
     'options'
   ],
   mounted () {
-    console.log(this.options.logoUrl)
   }
 }
 </script>
 
 <style scoped>
 .main-header {
-  display: flex;
-
-  height: 42px;
+  width: 100%;
 
   background-color: var(--main-color);
 }
 
 .main-header__content {
-  margin: 0 0 0 10%;
+  display: flex;
+  align-items: center;
+
+  height: 42px;
+  width: 1366px;
+
+  margin: 0 auto;
 }
 
 .main-header__logo-wrapper {
@@ -51,8 +57,12 @@ export default {
   width: 100%;
 }
 
+.main-header__link {
+  font-size: 0;
+}
+
 .main-header__logo {
-  margin-left: 7%;
+  margin-right: 16px;
 }
 
 .main-header__caption {

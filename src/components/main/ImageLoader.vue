@@ -1,53 +1,78 @@
 <template>
-  <label class="image-loader"
-    :options="options.validTypes ? options.validTypes : ['image/png', 'image/jpeg']">
-    <input type="hidden" name="image-loader"> <!-- todo -->
+  <InputField class="image-loader"
+      :options="options.validTypes ? options.validTypes : ['image/png', 'image/jpeg']"
+      :validators="validators"
+      :required="required"
+      :name="options.name"
+      :value="value"
+      @reset="resetHandler">
 
-    <div class="image-loader__drag-area"
-      v-if="!isFull"
-      ref="dragArea"
-      @drag="prevent"
-      @dragleave="prevent"
-      @dragover="prevent"
-      @drop="dropHandler"
-    >
-      <div class="image-loader__download-ico"></div>
-      <div class="image-loader__download-description">
-        <slot></slot>
+    <template v-slot:caption>
+      <slot name="caption"></slot>
+    </template>
+
+    <template v-slot:default="slotProps">
+      <div class="image-loader__drag-area-wrapper">
+      <FileLoader
+        :has-error="!!slotProps.errorList[options.name]"
+        :options="options"
+        :multiple="'multiple'"
+        :name="options.name"
+        @change="fileLoaderChangeHandler">
+
+        <template v-slot:description>
+          <slot name="description"></slot>
+        </template>
+
+      </FileLoader>
+
+      <Tooltip
+        :message="slotProps.errorList[options.name]"
+        :is-visible="slotProps.errorList[options.name]"
+      />
+
       </div>
-    </div>
 
-    <ul class="image-loader__file-list">
+      <ul class="image-loader__file-list">
 
-      <li class="image-loader__item"
-        v-if="images[image.id]"
-        v-for="(image, index) in value"
-        :key="index">
+        <li class="image-loader__item"
+          v-if="images[image.id]"
+          v-for="(image, index) in value"
+          :key="index">
 
-        <img class="image-loader__image"
-          :src="images[image.id]">
+          <img class="image-loader__image"
+            :src="images[image.id]">
 
-        <div class="image-loader__image-name">
-          {{ image.name }}
-        </div>
+          <div class="image-loader__image-name">
+            {{ image.name }}
+          </div>
 
-        <div class="image-loader__basket"
-          @click="removeImage(image.id)">
+          <div class="image-loader__basket"
+            @click="removeImage(image.id)">
 
-        </div>
+          </div>
 
-      </li>
+        </li>
 
-    </ul>
+      </ul>
+    </template>
 
-  </label>
+  </InputField>
 </template>
 
 <script>
+import InputField from './InputField'
+import FileLoader from './FileLoader'
+import Tooltip from './Tooltip'
+
 export default {
   name: 'ImageLoader',
+  components: {Tooltip, FileLoader, InputField},
   props: [
-    'options'
+    // maxCount, maxSize, validTypes, name
+    'options',
+    'validators',
+    'required'
   ],
   data () {
     return {
@@ -55,41 +80,8 @@ export default {
       images: {}
     }
   },
-  computed: {
-    isFull: function () {
-      return Object.keys(this.value).length >= this.options.maxCount
-    }
-  },
   methods: {
-    prevent: function (event) {
-      event.stopPropagation()
-      event.preventDefault()
-    },
-    dropHandler: function (event) {
-      event.stopPropagation()
-      event.preventDefault()
-
-      let dt = event.dataTransfer
-      let files = dt.files
-
-      ;[].forEach.call(files, image => {
-        // eslint-disable-next-line
-        if (
-          !!~this.options.validTypes.indexOf(image.type) &&
-          !this.isFull &&
-          this.options.maxSize >= image.size
-        ) {
-          image.id = Math.random().toString(16).slice(2)
-          this.$set(this.value, image.id, image)
-
-          this.readImage(image).then((result) => {
-            this.$set(this.images, image.id, result)
-          })
-        } else {
-          console.log('error') // todo
-        }
-      })
-    },
+    // read image and reject reading result
     readImage: function (image) {
       return new Promise((resolve) => {
         let reader = new FileReader()
@@ -99,47 +91,48 @@ export default {
         reader.readAsDataURL(image)
       })
     },
+
+    // remove image from result and page
     removeImage: function (id) {
       this.$delete(this.value, id)
       this.$delete(this.images, id)
+
+      this.$emit('delete', id)
+      this.$emit('change', 'change')
+    },
+
+    // add new value to result and read image
+    fileLoaderChangeHandler: function (image) {
+      this.$set(this.value, image.id, image)
+      this.$emit('change', 'change')
+
+      this.readImage(image).then((result) => {
+        this.$set(this.images, image.id, result)
+      })
+    },
+
+    // remove all images from result and page
+    resetHandler: function () {
+      for (let imageId in this.value) {
+        this.$delete(this.value, imageId)
+      }
     }
+  },
+  created () {
+    console.log(this.$parent)
+
+    this.$parent.$on('submit', () => {
+      this.$emit('submit', 'submit')
+    })
   }
 }
+
 </script>
 
 <style scoped>
 .image-loader {
+  position: relative;
   display: block;
-}
-
-.image-loader__drag-area {
-  box-sizing: border-box;
-
-  display: flex;
-  align-items: center;
-
-  height: 72px;
-
-  margin-top: 2em; /* todo */
-  padding: 2em;
-
-  background-color: var(--light-color);
-
-  border: 1px dashed var(--inactive-color-04);
-  border-radius: 6px;
-}
-
-.image-loader__download-ico {
-  width: 30px;
-  height: 20px;
-
-  margin: 0 10px 0 0;
-
-  background: url("../../assets/download.svg") 50% 50% no-repeat;
-}
-
-.image-loader__download-description {
-  color: var(--inactive-color-04)
 }
 
 .image-loader__file-list {
@@ -147,6 +140,12 @@ export default {
   padding: 0;
 
   list-style: none;
+}
+
+.image-loader__drag-area-wrapper {
+  position: relative;
+
+  display: flex;
 }
 
 .image-loader__item {

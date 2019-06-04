@@ -1,111 +1,148 @@
 <template>
-  <div class="dropdown">
+  <InputField class="dropdown"
+    :validators="validators"
+    :required="required"
+    :name="options.name"
+    :value="value">
 
-    <div class="dropdown__input-wrapper">
-      <div class="dropdown__clear"
-        v-if="inputValue.length"
-        @click="clearInput">
-        Banking
-      </div>
+    <template v-slot:caption>
+      <slot></slot>
+    </template>
 
-      <input class="dropdown__value-field" type="text" name="dropdown"
-         v-model="inputValue"
-         @click="dropdownClickHandler"
-         @input="filter"
-         :placeholder="viewSelectedData()">
-    </div>
+    <template v-slot:default="slotProps">
+      <Tooltip
+        :message="slotProps.errorList[options.name]"
+        :is-visible="slotProps.errorList[options.name]"
+      />
+      <label>
+        <ul class="dropdown__selected-items"
+            @click="showDroplist">
 
-    <div class="dropdown__drop-list-wrapper"
-         v-if="dropdownIsVisible">
+          <li class="dropdown__selected-item"
+            v-for="(item) in value"
+            :key="item.id">
 
-      <div class="dropdown__scroll"
-        ref="dropdownScroll">
-      </div>
+            {{ item.value }}
 
-      <ul class="dropdown__drop-list"
-          @scroll="dropdownScrollHandler"
-          :style="dropListHeight">
+            <div class="dropdown__selected-remove"
+              @click="removeItem(item)">
+            </div>
 
-        <li class="dropdown__item"
-            ref="item"
-            v-for="(item) in dataList"
-            v-if="item.visible"
-            :key="item.id"
-            :data-id="item.id"
-            :class="{'dropdown__item--selected': item.selected}"
-            @click="select(item)">
-          {{ item.value }}
-        </li>
+          </li>
+          <li class="dropdown__input-item">
+            <input class="dropdown__input-field" type="text"
+              :placeholder="value.length ? '' : options.placeholder"
+               v-model="inputValue"
+              @input="filterList">
+          </li>
+        </ul>
 
-      </ul>
+        <div class="dropdown__droplist-wrapper"
+           v-if="dropListIsVisible">
+          <div class="dropdown__scroll"
+            ref="dropdownScroll"
+            v-if="calcScrollVisibility()"></div>
 
-    </div>
+          <ul class="dropdown__item-list"
+            :style="{'max-height': options.maxDisplayItems * 48 + 'px'}"
+            @scroll.prevent="scrollHandler">
 
-  </div>
+            <li class="dropdown__item"
+              :ref="index"
+              :id="index"
+              v-for="(item, index) in dataList"
+              v-if="item.visible"
+              :class="{'dropdown__item--selected': item.selected}"
+              :key="item.id"
+              @click="selectItem(item, index)">
+
+              {{ item.value }}
+
+            </li>
+
+          </ul>
+        </div>
+      </label>
+
+    </template>
+  </InputField>
 </template>
 
 <script>
+import Tooltip from './Tooltip'
+import InputField from './InputField'
 export default {
-  name: 'Dropdown',
+  name: 'newDropdown',
+  components: {InputField, Tooltip},
   props: [
-    'options'
+    // placeholder, maxCount, maxDisplayItems, name
+    'options',
+    'validators',
+    'required'
   ],
   data () {
     return {
-      'dataList': [],
-      'value': [],
-      'inputValue': '',
-      'dropdownIsVisible': false
+      inputValue: '',
+      value: [],
+      dataList: {},
+      dropListIsVisible: false
     }
   },
   computed: {
-    dropListHeight: function () {
-      const itemHeight = 45
 
-      let countVisibleItems = this.options.maxDisplayItems < this.dataList.length
-        ? this.options.maxDisplayItems : this.dataList.length
-
-      return {'max-height': itemHeight * countVisibleItems + 'px'}
-    }
   },
   methods: {
-    getData: function () {
-      return [
-        {value: 'item-1', id: '1'},
-        {value: 'foo-item-2', id: '2'},
-        {value: 'bar-item-3', id: '3'},
-        {value: 'baz-item-4', id: '4'},
-        {value: 'foo-item-5', id: '5'},
-        {value: 'item-6', id: '6'},
-        {value: 'item-7', id: '7'},
-        {value: 'item-8', id: '8'}
-      ]
+    // show scroll if a count of visible items less then max display items
+    calcScrollVisibility () {
+      return this.dataList.filter(item => item.visible).length > this.options.maxDisplayItems
     },
 
-    select: function (target) {
-      console.log(this.value.length)
+    // calculate visible items and highlighting searching text
+    filterList: function () {
+      let position, root, currentElement, temporaryText
 
-      target.selected = this.options.maxCount > this.value.length || target.selected ? !target.selected : target.selected
+      for (let i = 0; i <= this.dataList.length - 1; i++) {
+        // calc position searching string
+        position = this.dataList[i].value.toLowerCase().indexOf(this.inputValue.toLowerCase())
+        if (position !== -1) {
+          this.dataList[i].visible = true
 
-      if (target.selected === true && this.options.maxCount > this.value.length) {
-        this.value.push(target)
-      } else {
-        this.value = this.value.filter(item => item !== target)
+          // current li element
+          currentElement = this.$refs[this.dataList[i].id - 1][0]
+
+          // reset li content
+          if (currentElement) {
+            temporaryText = document.createTextNode(this.dataList[i].value)
+            // eslint-disable-next-line
+            while (currentElement && currentElement.firstChild) currentElement.firstChild.remove()
+            currentElement.appendChild(temporaryText)
+          }
+
+          // if li element is rendered add highlight span wrapper
+          if (currentElement !== undefined && this.inputValue) {
+            root = currentElement.childNodes[0]
+
+            this.dataList[i].range.setStart(root, position)
+            this.dataList[i].range.setEnd(root, position + this.inputValue.length)
+
+            let span = document.createElement('span')
+            span.classList.add('highlight')
+
+            this.dataList[i].range.surroundContents(span)
+          }
+        } else {
+          this.dataList[i].visible = false
+        }
       }
+      this.$emit('input')
     },
-
-    filter: function () {
-      this.dataList.forEach(item => {
-        item.visible = item.value.startsWith(this.inputValue)
-      })
-    },
-
-    dropdownClickHandler: function () {
-      this.dropdownIsVisible = true
+    // show drop list if input in focus
+    showDroplist: function () {
+      this.dropListIsVisible = true
 
       let dropDownCloseHandler = (event) => {
         if (!~event.target.className.indexOf('dropdown')) {
-          this.dropdownIsVisible = false
+          this.dropListIsVisible = false
           document.removeEventListener('click', dropDownCloseHandler)
         }
       }
@@ -117,7 +154,32 @@ export default {
       })
     },
 
-    dropdownScrollHandler: function (event) { // todo
+    // remove item from result value
+    removeItem: function (target) {
+      this.value.forEach((item, index) => {
+        if (item === target) {
+          item.selected = false
+          this.$delete(this.value, index)
+          this.$emit('change', 'change')
+        }
+      })
+    },
+
+    // add item to result value and highlighting selected item
+    selectItem: function (target) {
+      target.selected = this.options.maxCount > this.value.length || target.selected ? !target.selected : target.selected
+
+      if (target.selected === true && this.options.maxCount > this.value.length) {
+        this.value.push(target)
+        this.$emit('change', 'change')
+      } else {
+        this.value = this.value.filter(item => item !== target)
+        this.$emit('change', 'change')
+      }
+    },
+
+    // handle scroll event over drop list
+    scrollHandler: function (event) {
       let clientHeight = event.target.clientHeight
       let scrollTop = event.target.scrollTop
       let scrollHeight = event.target.scrollHeight
@@ -130,142 +192,76 @@ export default {
       )
     },
 
+    // calculate drop list scroller position
     setScrollPosition: function (y) {
       this.$refs.dropdownScroll.style.top = y + 'px'
     },
 
-    viewSelectedData: function () {
-      let result = ''
-      this.value.forEach(item => {
-        console.log(item)
-        result += item.value + ', '
+    // get drop list data from server
+    getData: function () {
+      fetch('/getIndustries', {
+        method: 'post'
+      }).then(data => {
+        if (data.status !== '200') {
+          throw new Error('Not 200 response')
+        } else {
+          this.dataList = data
+        }
+      }).catch(() => {
+        this.dataList = [
+          {value: 'Agribusiness', id: '1'},
+          {value: 'Agricultural Services & Products', id: '2'},
+          {value: 'Auto Dealers, Japanese', id: '3'},
+          {value: 'Auto Manufacturers', id: '4'},
+          {value: 'Banks, Savings & Loans', id: '5'},
+          {value: 'Books, Magazines & Newspapers', id: '6'},
+          {value: 'Broadcasters, Radio/TV', id: '7'},
+          {value: 'Builders/Residential', id: '8'},
+          {value: 'Building Materials & Equipment', id: '9'},
+          {value: 'Construction Services', id: '10'},
+          {value: 'Credit Unions', id: '11'},
+          {value: 'Crop Production & Basic Processing', id: '12'},
+          {value: 'Cruise Ships & Lines', id: '13'}
+        ]
+      }).then(() => {
+        this.dataList.forEach(item => {
+          this.$set(item, 'selected', false)
+          this.$set(item, 'visible', true)
+          item.range = document.createRange()
+        })
       })
-
-      return result.slice(0, -2) || this.options.placeholder
     },
-
-    clearInput: function () {
-      this.inputValue = ''
-      this.filter()
-    }
   },
   created () {
-    this.dataList = this.getData()
+    this.getData()
 
-    this.dataList.forEach(item => {
-      this.$set(item, 'selected', false)
-      this.$set(item, 'visible', true)
+    this.$parent.$on('submit', () => {
+      this.$emit('submit', 'submit')
     })
-  },
-  mounted () {
-
   }
 }
 </script>
 
-<style scoped>
-input { /* todo */
-  box-sizing: border-box;
-
-  height: 48px;
-  width: 100%;
-
-  padding: 1em;
-  margin: 0 0 0 0;
-
-  border: 1px solid var(--inactive-color-03);
-  border-radius: 2px;
-  font-size: 14px;
-}
-
+<style>
 .dropdown {
   position: relative;
-  z-index: 1;
+
+  width: 100%;
 }
 
-.dropdown__value-field {
-
-}
-
-.dropdown__input-wrapper {
-  position: relative;
-
-  display: flex;
-  align-items: center;
-}
-
-.dropdown__clear {
-  box-sizing: border-box;
-
-  position: absolute;
-  left: 8px;
-
-  display: flex;
-  align-items: center;
-
-  width: 100px;
-  height: 32px;
-
-  padding: 0 0.4em;
-
-  cursor: pointer;
-  user-select: none;
-
-  background: var(--light-color);
-
-  border: 1px solid var(--inactive-color-04);
-  border-radius: 2px;
-}
-
-.dropdown__clear:hover {
-  background-color: var(--inactive-color-01);
-}
-
-.dropdown__clear:active {
-  box-shadow: inset 0 0 5px 0 rgba(0,0,0,0.1);
-}
-
-.dropdown__clear::after {
-  content: '';
-  position: absolute;
-  right: 4px;
-
-  width: 11px;
-  height: 13px;
-
-  background: url("../../assets/basket.svg") 50% 50% no-repeat;
-}
-
-.dropdown__clear + .dropdown__value-field {
-  padding-left: 120px;
-}
-
-.dropdown__drop-list-wrapper {
+.dropdown__droplist-wrapper {
   position: absolute;
 
   width: 385px;
 
   border: 1px solid var(--inactive-color-04);
+  border-radius: 4px;
   overflow: hidden;
+
+  z-index: 1;
 }
 
-.dropdown__scroll {
-  position: absolute;
-
-  right: 4px;
-  top: 0;
-
-  width: 5px;
-  height: 50%;
-
-  margin: 4px 0;
-
-  background-color: var(--inactive-color-04);
-
-  border-radius: 3px;
-}
-
-.dropdown__drop-list {
+.dropdown__item-list {
   width: 406px;
   max-height: 200px;
 
@@ -279,14 +275,106 @@ input { /* todo */
   overflow-y: scroll;
 }
 
-.dropdown__item {
-  margin: 0 14px 0 0;
+.dropdown__scroll {
+  position: absolute;
+  right: 4px;
+
+  width: 4px;
+  height: 50%;
+
+  margin: 4px 0 0 0;
+
+  background-color: var(--inactive-color-04);
+
+  border-radius: 4px;
+}
+
+.dropdown__selected-items {
+  box-sizing: border-box;
+
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  flex: 1 1 auto;
+
+  width: 100%;
+  min-height: 48px;
+
+  margin: 0;
+  padding: 0;
+
+  list-style: none;
+
+  border: 1px solid var(--inactive-color-03);
+  border-radius: 4px;
+
+  font-size: 14px;
+}
+
+.dropdown__input-item {
+  flex: 1 1 auto;
+}
+
+.dropdown__selected-remove {
+  position: absolute;
+
+  right: 0.8em;
+
+  width: 11px;
+  height: 13px;
+
+  cursor: pointer;
+
+  background: url("../../assets/basket.svg");
+}
+
+.dropdown__selected-item {
+  box-sizing: border-box;
+  position: relative;
+
+  display: flex;
+  align-items: center;
+
+  height: 32px;
+
+  margin: 8px 0.5em;
+  padding: 0.2em 2em 0.2em 0.2em;
+
+  border: 1px solid var(--inactive-color-04);
+  border-radius: 4px;
+}
+
+.dropdown__input-field {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+
   padding: 1em;
 
+  border: none;
+}
+
+.dropdown__input-field:focus {
+  outline: none;
+}
+
+.dropdown__item {
+  box-sizing: border-box;
+  display: flex;
+
+  height: 48px;
+
+  padding: 1em;
+
+  border-bottom: 1px solid var(--inactive-color-015);
   cursor: pointer;
 }
 
 .dropdown__item--selected {
+  background-color: var(--success-color-07);
+}
+
+.dropdown__item:active {
   background-color: var(--inactive-color-04);
 }
 
@@ -294,7 +382,7 @@ input { /* todo */
   background-color: var(--inactive-color-01);
 }
 
-.dropdown__item--selected:hover {
-  background-color: var(--inactive-color-04);
+.highlight {
+  background-color: var(--inactive-color-01);
 }
 </style>

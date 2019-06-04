@@ -20,6 +20,12 @@ export default {
 
 <style scoped>
 .main {
-  flex: 0.4 0 auto;
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+
+  max-width: 580%;
+  width: 50%;
 }
 </style>

@@ -23,7 +23,6 @@ export default {
 
   position: absolute;
   right: calc(-20px - 230px);
-  top: 15px;
 
   display: flex;
   align-items: center;
@@ -41,6 +40,8 @@ export default {
   line-height: 144%;
 
   clip-path: polygon(0% 50%, 10px 0%, 100% 0%, 100% 100%, 10px 100%);
+
+  z-index: 1;
 }
 
 .tooltip__content {

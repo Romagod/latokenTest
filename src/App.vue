@@ -6,8 +6,11 @@
          caption: 'IEO Launchpad'
        }"/>
     <div class="content-wrapper">
-      <Sidebar></Sidebar>
+      <Sidebar>
+        <Nav></Nav>
+      </Sidebar>
       <Main></Main>
+      <Sidebar></Sidebar>
     </div>
 
   </div>
@@ -18,10 +21,12 @@
 import Header from './components/header/Header'
 import Sidebar from './components/nav/Sidebar'
 import Main from './components/main/Main'
+import Nav from './components/nav/Nav'
 
 export default {
   name: 'App',
   components: {
+    Nav,
     Main,
     Sidebar,
     Header
@@ -36,10 +41,12 @@ export default {
 
   @import url('https://fonts.googleapis.com/css?family=Fira+Sans:400,700&display=swap');
 
-  font-family: 'Fira Sans', sans-serif;
+  font-family: var(--font);
   font-size: 14px;
 
-  --main-color: rgb(64, 73, 96); /* !!! change*/
+  --font:'Fira Sans', sans-serif;
+
+  --main-color: rgb(64, 73, 96);
   --inactive-color-08: #666d80;
   --inactive-color-06: #8c92a0;
   --inactive-color-04: #b3b6bf;
@@ -49,16 +56,23 @@ export default {
   --inactive-color-01: #e2e4e7;
   --light-color: #ffffff;
   --link-color: #5495aa;
+  --success-color: #5ec16f;
+  --success-color-07: #8ed49a3d;
   --warning-color: #d56161;
+  --warning-color-07: #e29090;
 }
 
 .content-wrapper {
   display: flex;
 
-  margin: 40px 0 0 0;
+  max-width: 1366px;
+  width: 100%;
+
+  margin: 40px auto;
 }
 
 html, body {
   margin: 0;
+
 }
 </style>

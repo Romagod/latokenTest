@@ -15,6 +15,10 @@ export default {
 
 <style scoped>
 .page-header {
+  width: 580px;
+}
 
+.page-header__caption {
+  margin-top: 0;
 }
 </style>
