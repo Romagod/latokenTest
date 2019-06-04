@@ -13,7 +13,7 @@
       </span>
     </div>
 
-    <slot :errorList="errorList">
+    <slot :errorText="getErrorText()">
     </slot>
 
 </div>
@@ -70,50 +70,44 @@ export default {
         this.additionalInfo = validateResult.info
       }
 
+      let errorName = name + validator.data.eventType
+
       // add new error
       if (!validateResult.result) {
-        this.getTooltip().showError(validateResult.errorMessage)
-        this.$set(this.errorList, name, validateResult.errorMessage)
+        if (!this.errorList[name]) {
+          this.$set(this.errorList, name, {})
+        }
+
+        this.$set(this.errorList[name], errorName, validateResult.errorMessage)
 
         this.$parent.$emit('error', {name: name, hasErrors: this.hasErrors()})
 
       // delete error
       } else if (this.errorList[name]) {
-        this.$delete(this.errorList, name)
+        this.$delete(this.errorList[name], errorName)
+        this.$delete(this.errorList[name], name + 'submit')
         this.$parent.$emit('error', {name: name, hasErrors: this.hasErrors()})
-        this.getTooltip().nextError()
       }
     },
 
     // check error in errorList
     hasErrors: function () {
-      return !!Object.keys(this.errorList).length
-    },
-
-    // Object for manipulating tooltip
-    getTooltip: function () {
-      return {
-        // display next error
-        nextError: () => {
-          for (let key in this.errorList) {
-            this.tooltip.message = key
-            return
-          }
-
-          this.tooltip.isVisible = false
-        },
-
-        // show first error in errorList
-        showError: (message) => {
-          this.tooltip.isVisible = true
-          this.tooltip.message = message
-        },
-
-        // hide tooltip
-        close: () => {
-          this.tooltip.isVisible = false
+      for (let type in this.errorList) {
+        for (let key in this.errorList[type]) {
+          return true
         }
       }
+      return false
+    },
+    getErrorText: function () {
+      let result = false
+      for (let type in this.errorList) {
+        for (let key in this.errorList[type]) {
+          result = this.errorList[type][key]
+        }
+      }
+
+      return result
     }
   },
   created () {

@@ -211,7 +211,7 @@ export default {
   methods: {
     // validator "constructor"
     newValidator: function (F, data) {
-      return new F (data)
+      return new F(data)
     },
 
     // checking max items length. It's check count of items in object and arrays or string length for string

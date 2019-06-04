@@ -64,6 +64,7 @@ export default {
 
 .content-wrapper {
   display: flex;
+  justify-content: space-between;
 
   max-width: 1366px;
   width: 100%;

@@ -221,7 +221,7 @@ export default {
 
 .file-loader--success .file-loader__download-ico {
   background: url("../../assets/success.svg") 50% 50% no-repeat;
-  background-size: 100% 100%;
+  background-size: auto 100%;
 }
 
 .file-loader__download-description {

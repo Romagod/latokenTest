@@ -11,8 +11,8 @@
 
     <template v-slot:default="slotProps">
       <Tooltip
-        :message="slotProps.errorList[options.name]"
-        :is-visible="slotProps.errorList[options.name]"
+        :message="slotProps.errorText"
+        :is-visible="slotProps.errorText"
       />
       <label>
         <ul class="dropdown__selected-items"
@@ -143,6 +143,7 @@ export default {
       let dropDownCloseHandler = (event) => {
         if (!~event.target.className.indexOf('dropdown')) {
           this.dropListIsVisible = false
+          this.inputValue = ''
           document.removeEventListener('click', dropDownCloseHandler)
         }
       }
@@ -230,7 +231,7 @@ export default {
           item.range = document.createRange()
         })
       })
-    },
+    }
   },
   created () {
     this.getData()

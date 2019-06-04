@@ -14,7 +14,7 @@
     <template v-slot:default="slotProps">
       <div class="image-loader__drag-area-wrapper">
       <FileLoader
-        :has-error="!!slotProps.errorList[options.name]"
+        :has-error="!!slotProps.errorText"
         :options="options"
         :multiple="'multiple'"
         :name="options.name"
@@ -27,8 +27,8 @@
       </FileLoader>
 
       <Tooltip
-        :message="slotProps.errorList[options.name]"
-        :is-visible="slotProps.errorList[options.name]"
+        :message="slotProps.errorText"
+        :is-visible="slotProps.errorText"
       />
 
       </div>

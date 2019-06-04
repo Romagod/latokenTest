@@ -15,12 +15,12 @@
       <div class="document-loader__drag-area-wrapper">
 
         <Tooltip
-          :message="slotProps.errorList[options.name]"
-          :is-visible="slotProps.errorList[options.name]"
+          :message="slotProps.errorText"
+          :is-visible="slotProps.errorText"
         />
 
         <FileLoader
-          :has-error="!!slotProps.errorList[options.name]"
+          :has-error="!!slotProps.errorText"
           :options="options"
           :name="options.name"
           @change="fileLoaderChangeHandler">

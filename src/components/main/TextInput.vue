@@ -18,7 +18,7 @@
           <input class="text__input-field" type="text"
              v-if="item.type === 'text'"
              v-model="value[item.name]"
-            :has-error="!!slotProps.errorList[item.name]"
+            :has-error="!!slotProps.errorText"
             :name="item.name"
             :placeholder="item.placeholder"
             @input="inputHandler"
@@ -27,7 +27,7 @@
           <textarea class="text__textarea-field"
             v-if="item.type === 'textarea'"
             v-model="value[item.name]"
-            :has-error="!!slotProps.errorList[item.name]"
+            :has-error="!!slotProps.errorText"
             :name="item.name"
             :placeholder="item.placeholder"
             @input="inputHandler"
@@ -35,8 +35,8 @@
           </textarea>
 
           <Tooltip
-            :message="slotProps.errorList[item.name]"
-            :is-visible="slotProps.errorList[item.name]"
+            :message="slotProps.errorText"
+            :is-visible="slotProps.errorText"
           />
         </div>
 
@@ -127,7 +127,7 @@ export default {
   padding: 1em;
 
   border-radius: 4px;
-  border-color: var(--inactive-color-03);
+  border: 1px solid var(--inactive-color-03);
 
   resize: none;
 
